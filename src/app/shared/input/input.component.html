@@ -1,8 +1,8 @@
 <input
   [formControl]="control"
-  type="text"
+  [type]="type"
   class="block w-full py-1.5 px-3 text-gray-200 border border-gray-400 transition duration-500 focus:outline-none rounded bg-transparent focus:border-indigo-400"
-  placeholder="Enter Name"
+  [placeholder]="placeholder"
 />
 <ng-container
   *ngIf="control.touched && control.dirty && control.touched && control.dirty"
@@ -16,5 +16,14 @@
     characters long, It must be atleast
     {{control.errors?.['minlength'].requiredLength}}
     characters long.
+  </p>
+  <p class="text-red-400" *ngIf="control.errors?.['email']">
+    You must enter a valid email!
+  </p>
+  <p class="text-red-400" *ngIf="control.errors?.['min']">
+    Age is too low
+  </p>
+  <p class="text-red-400" *ngIf="control.errors?.['max']">
+    Age is too high
   </p>
 </ng-container>

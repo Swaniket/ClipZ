@@ -1,12 +1,16 @@
 <input
   [formControl]="control"
   [type]="type"
-  class="block w-full py-1.5 px-3 text-gray-200 border border-gray-400 transition duration-500 focus:outline-none rounded bg-transparent focus:border-indigo-400"
   [placeholder]="placeholder"
+  [mask]="format"
+  [dropSpecialCharacters]="false"
+  class="block w-full py-1.5 px-3 text-gray-200 border border-gray-400 transition duration-500 focus:outline-none rounded bg-transparent focus:border-indigo-400"
 />
-<ng-container
-  *ngIf="control.touched && control.dirty && control.touched && control.dirty"
->
+<ng-container *ngIf="control.touched && control.dirty">
+  <p class="text-red-400" *ngIf="control.errors?.['pattern']">
+    The password must be atleast 8 characters long, 1 uppercase letter, 1
+    lowercase letter, and 1 number.
+  </p>
   <p *ngIf="control.errors?.['required']" class="text-red-400">
     *Field is Required
   </p>
@@ -20,10 +24,6 @@
   <p class="text-red-400" *ngIf="control.errors?.['email']">
     You must enter a valid email!
   </p>
-  <p class="text-red-400" *ngIf="control.errors?.['min']">
-    Age is too low
-  </p>
-  <p class="text-red-400" *ngIf="control.errors?.['max']">
-    Age is too high
-  </p>
+  <p class="text-red-400" *ngIf="control.errors?.['min']">Age is too low</p>
+  <p class="text-red-400" *ngIf="control.errors?.['max']">Age is too high</p>
 </ng-container>

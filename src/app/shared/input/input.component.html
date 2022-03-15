@@ -26,4 +26,10 @@
   </p>
   <p class="text-red-400" *ngIf="control.errors?.['min']">Age is too low</p>
   <p class="text-red-400" *ngIf="control.errors?.['max']">Age is too high</p>
+  <p class="text-red-400" *ngIf="control.errors?.['noMatch']">
+    Passwords do not match
+  </p>
+  <p class="text-red-400" *ngIf="control.errors?.['emailTaken']">
+    This Email is already taken. Please try another email.
+  </p>
 </ng-container>

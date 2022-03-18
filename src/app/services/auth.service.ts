@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { Router } from '@angular/router';
 import { Observable } from 'rxjs';
 import { delay, map } from 'rxjs/operators';
 
@@ -18,7 +19,11 @@ export class AuthService {
   public isAuthenticated$: Observable<boolean>; // $ is a naming convention to identify properties as observables
   public isAuthenticatedWithDelay$: Observable<boolean>;
 
-  constructor(private auth: AngularFireAuth, private db: AngularFirestore) {
+  constructor(
+    private auth: AngularFireAuth,
+    private db: AngularFirestore,
+    private router: Router
+  ) {
     this.usersCollection = db.collection('users');
     // Get the auth status - convert into boolean
     this.isAuthenticated$ = auth.user.pipe(map((user) => !!user));
@@ -49,5 +54,12 @@ export class AuthService {
     await userCredentials.user.updateProfile({
       displayName: userData.name,
     });
+  }
+
+  public async logout($event?: Event) {
+    if ($event) $event.preventDefault();
+    await this.auth.signOut();
+    // For redirecting the user after logout
+    await this.router.navigateByUrl('/');
   }
 }

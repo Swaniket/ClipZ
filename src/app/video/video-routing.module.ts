@@ -5,12 +5,16 @@ import { ManageComponent } from './manage/manage.component';
 const routes: Routes = [
   {
     path: 'manage',
-    component: ManageComponent
-  }
+    component: ManageComponent,
+    data: {
+      // Needs Authentication
+      authOnly: true,
+    },
+  },
 ];
 
 @NgModule({
   imports: [RouterModule.forChild(routes)],
-  exports: [RouterModule]
+  exports: [RouterModule],
 })
-export class VideoRoutingModule { }
+export class VideoRoutingModule {}

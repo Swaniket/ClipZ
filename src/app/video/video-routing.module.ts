@@ -1,8 +1,12 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
+import { AngularFireAuthGuard, redirectUnauthorizedTo } from '@angular/fire/compat/auth-guard';
 
 import { ManageComponent } from './manage/manage.component';
 import { UploadComponent } from './upload/upload.component';
+
+// Redirect unauth users to home page
+const redirectUnauthorizedToHome = () => redirectUnauthorizedTo('/')
 
 const routes: Routes = [
   {
@@ -11,14 +15,23 @@ const routes: Routes = [
     data: {
       // Needs Authentication
       authOnly: true,
+      authGuardPipe: redirectUnauthorizedToHome
     },
+    canActivate: [AngularFireAuthGuard]
   },
   {
     path: 'upload',
     component: UploadComponent,
     data: {
       authOnly: true,
+      authGuardPipe: redirectUnauthorizedToHome
     },
+    canActivate: [AngularFireAuthGuard]
+  },
+  // Redirect to a different path
+  {
+    path: 'manage-clips',
+    redirectTo: 'manage',
   },
 ];
 

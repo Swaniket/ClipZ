@@ -1,9 +1,13 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { last, switchMap } from 'rxjs/operators';
 import { v4 as uuid } from 'uuid';
+import { Router } from '@angular/router';
 
-import { AngularFireStorage } from '@angular/fire/compat/storage';
+import {
+  AngularFireStorage,
+  AngularFireUploadTask,
+} from '@angular/fire/compat/storage';
 import { AngularFireAuth } from '@angular/fire/compat/auth';
 import firebase from 'firebase/compat/app';
 
@@ -14,7 +18,7 @@ import { ClipService } from 'src/app/services/clip.service';
   templateUrl: './upload.component.html',
   styleUrls: ['./upload.component.css'],
 })
-export class UploadComponent implements OnInit {
+export class UploadComponent implements OnDestroy {
   isDragOver = false;
   nextStep = false;
   inSubmission = false;
@@ -27,6 +31,7 @@ export class UploadComponent implements OnInit {
 
   file: File | null = null;
   user: firebase.User | null = null;
+  task?: AngularFireUploadTask;
 
   // Form
   title = new FormControl('', [Validators.required, Validators.minLength(3)]);
@@ -38,18 +43,20 @@ export class UploadComponent implements OnInit {
   constructor(
     private storage: AngularFireStorage,
     private auth: AngularFireAuth,
-    private clipsService: ClipService
+    private clipsService: ClipService,
+    private router: Router
   ) {
     auth.user.subscribe((user) => (this.user = user));
   }
 
-  ngOnInit(): void {}
-
   // Read & process the uploaded file
   storeFile(event: Event) {
+    console.log(event);
     this.isDragOver = false;
 
-    this.file = (event as DragEvent).dataTransfer?.files.item(0) ?? null;
+    this.file = (event as DragEvent).dataTransfer
+      ? (event as DragEvent).dataTransfer?.files.item(0) ?? null
+      : (event.target as HTMLInputElement).files?.item(0) ?? null;
 
     // Validation of File Type
     if (!this.file || this.file.type !== 'video/mp4') {
@@ -62,6 +69,7 @@ export class UploadComponent implements OnInit {
 
   // Handle form Submission
   uploadFile() {
+    this.uploadForm.disable();
     this.showAlert = true;
     this.alertColor = 'blue';
     this.alertMsg = 'Please wait, your clip is being uploaded!';
@@ -71,39 +79,44 @@ export class UploadComponent implements OnInit {
     const clipFileName = uuid();
     const clipPath = `clips/${clipFileName}.mp4`;
 
-    const task = this.storage.upload(clipPath, this.file);
+    this.task = this.storage.upload(clipPath, this.file);
     const clipRef = this.storage.ref(clipPath);
 
-    task.percentageChanges().subscribe((progress) => {
+    this.task.percentageChanges().subscribe((progress) => {
       this.percentage = (progress as number) / 100;
     });
 
-    task
+    this.task
       .snapshotChanges()
       .pipe(
         last(),
         switchMap(() => clipRef.getDownloadURL())
       )
       .subscribe({
-        next: (url) => {
+        next: async (url) => {
           const clip = {
             uid: this.user?.uid as string,
             displayName: this.user?.displayName as string,
             title: this.title.value,
             fileName: `${clipFileName}.mp4`,
             url,
+            timestamp: firebase.firestore.FieldValue.serverTimestamp(),
           };
 
-          this.clipsService.createClip(clip);
-
-          console.log(clip);
+          const clipDocRef = await this.clipsService.createClip(clip);
 
           this.alertColor = 'green';
           this.alertMsg =
             'Success! Your clip is now ready to share with the world.';
           this.showPercentage = false;
+
+          setTimeout(() => {
+            this.router.navigate(['clip', clipDocRef.id]);
+          }, 2000);
         },
         error: (error) => {
+          this.uploadForm.enable();
+
           this.alertColor = 'red';
           this.alertMsg = 'Upload Failed! Please Try Again Later.';
           this.inSubmission = true;
@@ -111,5 +124,9 @@ export class UploadComponent implements OnInit {
           console.error(error);
         },
       });
+  }
+
+  ngOnDestroy(): void {
+    this.task?.cancel();
   }
 }
